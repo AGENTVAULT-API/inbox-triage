@@ -37,6 +37,13 @@ ROUTES = {
     "internal":     {"owner": "ops@",        "sla_minutes": 240, "pilot": "team forwards"},
 }
 
+# Generic mailbox names. Greeting "info@" as "Hello Info," is worse than not
+# greeting at all — it reads as a bot that did not read the address.
+GENERIC_MAILBOXES = {"info", "office", "kontakt", "contact", "hello", "admin",
+                     "mail", "mailbox", "team", "support", "sales", "help",
+                     "service", "sekretariat", "gf", "post", "enquiries",
+                     "contact01", "info01", "mail01"}
+
 # Categories that must NEVER be auto-actioned. Human owns these.
 HUMAN_ONLY = {"billing_dispute", "legal", "complaint", "security_incident"}
 
@@ -277,7 +284,16 @@ def classify_subtype(category: str, body: str):
 
 def draft_reply(category: str, subtype: str, sender: str, entities: dict):
     """Deterministic acknowledgement. Never sent automatically."""
-    name = (sender or "").split(".")[0].replace("-", " ").title() or "there"
+    # Split on "@" BEFORE treating the local part as first.last. Splitting the
+    # whole address on "." mangles "peter@kellerlogistik.ch" into
+    # "eter@kellerlogistik" and greets them as "Hello eter@kellerlogistik,".
+    local = (sender or "").split("@")[0]
+    first = re.split(r"[._-]", local)[0] if local else ""
+    clean = re.sub(r"[^A-Za-z]", "", first)
+    # A generic mailbox is not a person's name.
+    if clean.lower() in GENERIC_MAILBOXES:
+        clean = ""
+    name = clean.capitalize() if clean else ""
     greet = f"Hello {name}," if name else "Hello,"
 
     if subtype in HUMAN_ONLY:

@@ -141,7 +141,16 @@ function triage(subject,body,sender){
 }
 
 function draftReply(cat,sender){
-  const n=(sender||"").split(".")[0].replace(/-/g," ").replace(/^\w/,"");
+  /* Name extraction from an address is error-prone: split on "@" FIRST, and
+     only then treat the local part as "first.last". A naive split(".") on the
+     whole address mangles "peter@kellerlogistik.ch" into "eter@kellerlogistik"
+     and greets the prospect as "Hello eter@kellerlogistik,". */
+  const local=(sender||"").split("@")[0];
+  const first=local.split(/[._-]/)[0]||"";
+  let clean=first.replace(/[^A-Za-z]/g,"");
+  /* A generic mailbox is not a person's name: never greet "info@" as "Hello Info". */
+  if(["info","office","kontakt","contact","hello","admin","mail","mailbox","team","support","sales","help","service","sekretariat","gf","post","enquiries","info01","mail01","contact01"].indexOf(clean.toLowerCase())>=0) clean="";
+  const n=clean?clean.charAt(0).toUpperCase()+clean.slice(1):"";
   const g="Hello"+(n?" "+n:"")+",";
   const map={
     sales:g+"\n\nThank you for your enquiry — happy to help.\n\nTo give you an accurate answer I need: your approximate scope, your target start date, and any deadline we should work back from.\n\nIf it is easier, suggest two times for a 15-minute call this week and I will confirm one.\n\nBest regards",
