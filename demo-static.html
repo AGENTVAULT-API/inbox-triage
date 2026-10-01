@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inbox Triage — live demo (static)</title>
+<style>
+:root{--bg:#0f1216;--card:#171b21;--line:#252b34;--fg:#e6e9ee;--mut:#98a2b3;--acc:#4f9cf9;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:20px 26px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:13px;flex-wrap:wrap}
+h1{font-size:18px;margin:0}
+.sub{color:var(--mut);font-size:13px}
+main{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px 26px;max-width:1180px}
+@media(max-width:840px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 13px}
+label{display:block;font-size:12px;color:var(--mut);margin:11px 0 5px}
+input,textarea{width:100%;background:#0b0e12;border:1px solid var(--line);color:var(--fg);
+  border-radius:6px;padding:9px 11px;font:inherit;font-size:14px}
+textarea{min-height:112px;resize:vertical}
+.samples{display:flex;flex-wrap:wrap;gap:7px}
+button{background:var(--acc);color:#06101d;border:0;border-radius:6px;padding:10px 17px;
+  font:inherit;font-weight:600;cursor:pointer;margin-top:15px}
+.chip{border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:5px 12px;
+  font-size:12px;cursor:pointer;background:transparent}
+.chip:hover{color:var(--fg);border-color:var(--acc)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;
+  border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.k{color:var(--mut);font-size:13px}
+.pill{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600}
+.p-hold{background:rgba(248,81,73,.15);color:var(--bad)}
+.p-route{background:rgba(63,185,80,.15);color:var(--ok)}
+.p-quar{background:rgba(210,153,34,.15);color:var(--warn)}
+pre{background:#0b0e12;border:1px solid var(--line);border-radius:6px;padding:13px;font-size:12.5px;
+  white-space:pre-wrap;word-break:break-word;margin:11px 0 0}
+.note{color:var(--mut);font-size:12px;margin-top:13px;line-height:1.5}
+.badge{margin-left:auto;font-size:11.5px;color:var(--mut);border:1px solid var(--line);
+  padding:4px 10px;border-radius:99px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Inbox Triage</h1>
+  <span class="sub">shared-inbox routing — live demo</span>
+  <span class="badge">static build · same engine as the pilot</span>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Incoming email</h2>
+    <div class="samples" id="samples"></div>
+    <label for="subj">Subject</label>
+    <input id="subj" placeholder="Subject line">
+    <label for="body">Body</label>
+    <textarea id="body" placeholder="Paste the email body"></textarea>
+    <label for="sender">Sender address</label>
+    <input id="sender" placeholder="name@company.com">
+    <button onclick="run()">Triage this email</button>
+  </div>
+
+  <div class="card">
+    <h2>Routing decision</h2>
+    <div id="out"><p class="note">Pick a sample or paste an email, then triage.</p></div>
+    <p class="note">This recommends — it never sends. Legal, complaint, billing-dispute
+      and security-incident mail is always held for a human, checked before any routing
+      decision is made.</p>
+  </div>
+</main>
+
+<script>
+/* Same signal tables as triage.py. Rules engine, no network call — which is
+   also the point: the pilot never sends mail content to a third party. */
+const CATS = {
+  sales:{strong:["offer","proposal","quote","quotation","pricing","estimate","demo","trial","interested in","onboarding","contract","rfq","request for quote","how much","budget","scope of work","quotation for","best pricing","rates for the coming year"],weak:["enquiry","inquiry","follow up","following up","question about","your services","do you offer","get in touch","any update","would be good to hear","referred you","details of your","like to hear from you","enterprise plan"]},
+  support:{strong:["not working","broken","error","cannot","can't","outage","failed","issue with","problem with","down","crash","appointment","reschedule","cancel my","change my booking","password reset","token is expired","delayed","tracking has not","will it arrive","not updated","stopped working","feature request","add a feature","manual work","blocked client work","export to","each week","slot"],weak:["help","support","question","how do i","assistance","complaint","unhappy","refund","please advise","advice urgently","save us","that would","stuck"]},
+  billing:{strong:["invoice","payment","overdue","reminder","receipt","vat","billing","credit note","charged","billing dispute","payment terms","monthly invoicing","copy of a receipt","payment has been made","renews automatically","accounting department","present a budget internally","second reminder","first reminder","our current contract renews"],weak:["pay","cost","price","amount due","for our accounts","for your records","contract renews","renew","renewal"]},
+  recruitment:{strong:["cv","resume","curriculum vitae","application","job","vacancy","position","portfolio","references","interview","i applied","advertised"],weak:["career","recruit","hiring","candidate","heard nothing"]},
+  press:{strong:["press","journalist","interview request","media","reporter","editorial","publication","podcast","magazine","guest","writing a feature","as a guest"],weak:["article","feature","coverage","episode"]},
+  internal:{strong:["fyi","internal","team","all hands","minutes","rota","shift swap","colleagues","my shifts","internal only"],weak:["shift","office","covering","attached the minutes"]},
+  spam:{strong:["unsubscribe","limited time offer","act now","click here","guaranteed","viagra","crypto giveaway","lottery","winner","congratulations you","work from home and earn","web3 airdrop","you have won","claim your prize","hot singles","attractive singles"],weak:["buy followers","seo services","guest post","backlinks","cheap backlinks","guaranteed returns","click here to start"]}
+};
+const SENSITIVE = {
+  security_incident:["data breach","breach of data","gdpr breach","security incident","phishing","ransomware","compromised","unauthorised access","unauthorized access","leaked data","data leak","suspected breach","ncsc","incident response","credential"],
+  legal:["solicitor","lawyer","attorney","legal notice","legal action","court","litigation","liability","cease and desist","statutory","liability clause","jurisdiction","arbitration","legal claim"],
+  billing_dispute:["billing dispute","overcharge","overcharged","wrong amount","do not recognise","do not recognize","unauthorised charge","unauthorized charge","credit note"],
+  complaint:["formal complaint","unhappy","disappointed","dispute","refund","chargeback","escalate to management","your fault","poor service"]
+};
+const ROUTES={sales:{owner:"sales@",sla:15},support:{owner:"support@",sla:60},billing:{owner:"finance@",sla:240},recruitment:{owner:"hr@",sla:720},press:{owner:"comms@",sla:720},internal:{owner:"ops@",sla:240}};
+const P1=["urgent","asap","immediately","emergency","today","by end of day","eod","escalation","legal notice","data breach","outage","critical","deadline","time sensitive","no reply","second attempt","third attempt"];
+const P2=["this week","soon","shortly","short notice","priority","follow up","reminder","waiting","chase","quick question"];
+const MIN_CONF=3.0;
+
+const SAMPLES=[
+ {label:"Sales enquiry",subject:"Quote request for 40 units",sender:"peter@kellerlogistik.ch",body:"Hi, we need a quote for 40 units delivered to Zurich. What is your pricing and lead time? We would like to start next month. Regards, Peter Keller, Keller Logistik GmbH, phone 044 221 45 67"},
+ {label:"Appointment change",subject:"Appointment change needed",sender:"anna.rei@example.ch",body:"Hello, I need to reschedule my appointment for Friday to next Tuesday morning. Can you confirm? Also my phone is 079 123 45 67. Thanks, Anna"},
+ {label:"Urgent outage",subject:"Cannot log in since this morning",sender:"marco@beispiel.ch",body:"Hi team, I cannot log into the portal since this morning. It shows an error. This is blocking our team. Please advise. Best, Marco"},
+ {label:"Billing query",subject:"Invoice 2026-118 payment query",sender:"finance@client.ch",body:"Hello, regarding invoice 2026-118 - could you send the receipt and confirm the payment terms and VAT number? Thanks, Finance"},
+ {label:"Legal notice",subject:"We received a legal notice",sender:"law@client.ch",body:"Our solicitor has issued a legal notice regarding the liability clause. Please direct all correspondence to our attorney."},
+ {label:"Data breach",subject:"URGENT: data breach, need response",sender:"ciso@enterprise.com",body:"This is urgent. We believe there was a data breach on your side. We need an immediate response and an escalation to your CTO today."},
+ {label:"Spam",subject:"Limited time offer!!! Act now",sender:"noreply@spam.biz",body:"Congratulations you! Click here for a crypto giveaway. Guaranteed returns, unsubscribe at any time. Work from home and earn thousands."},
+ {label:"Sales + legal (adversarial)",subject:"Great opportunity - please send proposal",sender:"buyer@corp.com",body:"Hi, I love your pricing and would like to discuss a contract and a proposal for our whole team. However our attorney has issued a legal notice which we must resolve first. Please send the quote."}
+];
+
+function triage(subject,body,sender){
+  const t=(subject+"\n\n"+body).toLowerCase();
+  /* SAFETY GATE FIRST — category-independent, fail closed. */
+  for(const k of ["security_incident","legal","billing_dispute","complaint"]){
+    const hits=SENSITIVE[k].filter(s=>t.includes(s));
+    if(hits.length) return {category:k,urgency:"P1",action:"hold_for_human",needsHuman:true,
+      route:null,sla:0,score:1,reason:"SAFETY: "+k+" detected ("+hits.slice(0,3).join(", ")+") — category-independent gate, no auto-action permitted"};
+  }
+  const scores={};
+  for(const c in CATS){
+    let s=0;
+    CATS[c].strong.forEach(w=>{if(t.includes(w))s+=3});
+    CATS[c].weak.forEach(w=>{if(t.includes(w))s+=1});
+    scores[c]=s;
+  }
+  const top=Object.entries(scores).sort((a,b)=>b[1]-a[1])[0];
+  const total=Object.values(scores).reduce((a,b)=>a+b,0)||1;
+  const p1=P1.filter(w=>t.includes(w));
+  const urg=p1.length?"P1":(P2.some(w=>t.includes(w))?"P2":"P3");
+  if(top[0]==="spam"&&top[1]>=(Object.values(scores).sort((a,b)=>b-a)[1]||0)){
+    return {category:"spam",urgency:"P3",action:"quarantine",needsHuman:false,route:null,sla:null,
+      score:+(top[1]/total).toFixed(3),reason:"spam score "+top[1]+" exceeds all other categories"};
+  }
+  const ent={};
+  const ph=(body.match(/(?:\+?\d{1,3}[\s.\-]?)?(?:\(?\d{2,4}\)?[\s.\-]?)?\d{3}[\s.\-]?\d{3,4}(?:[\s.\-]?\d{0,4})?/)||[])[0];
+  ent.phone=ph?ph.trim():null;
+  ent.dates=(body.match(/\b\d{1,2}[\/\.\-]\d{1,2}[\/\.\-]\d{2,4}\b/g)||[]).slice(0,3);
+  if(top[1]<MIN_CONF)
+    return {category:"unclassified",urgency:urg,action:"hold_for_human",needsHuman:true,route:null,
+      sla:60,score:+(top[1]/total).toFixed(3),reason:"insufficient signal (score "+top[1]+" < "+MIN_CONF+") — abstaining rather than guessing",ent:ent};
+  const r=ROUTES[top[0]]||ROUTES.internal;
+  return {category:top[0],urgency:urg,action:"route_and_draft",needsHuman:false,route:r.owner,
+    sla:urg==="P1"?15:r.sla,score:+(top[1]/total).toFixed(3),
+    reason:top[0]+" ("+top[1]+" pts) -> "+r.owner+(p1.length?"; P1: "+p1.slice(0,3).join(", "):""),ent:ent,
+    draft:draftReply(top[0],sender)};
+}
+
+function draftReply(cat,sender){
+  const n=(sender||"").split(".")[0].replace(/-/g," ").replace(/^\w/,"");
+  const g="Hello"+(n?" "+n:"")+",";
+  const map={
+    sales:g+"\n\nThank you for your enquiry — happy to help.\n\nTo give you an accurate answer I need: your approximate scope, your target start date, and any deadline we should work back from.\n\nIf it is easier, suggest two times for a 15-minute call this week and I will confirm one.\n\nBest regards",
+    support:g+"\n\nThanks for letting us know — sorry for the trouble.\n\nCould you confirm: when the problem started, and is anyone else affected? If it is blocking work, reply with the word URGENT and we will escalate to the on-call owner immediately.\n\nBest regards",
+    billing:g+"\n\nThank you for your message. I have referred this to our finance team, who will come back to you with the detail.\n\nIf you can quote the invoice number, it will speed this up.\n\nBest regards",
+    recruitment:g+"\n\nThank you for sending your application through.\n\nOur hiring lead reviews applications weekly and will reply either way.\n\nBest regards",
+    press:g+"\n\nThank you for reaching out. I have passed this to our communications lead, who will respond directly.\n\nBest regards"
+  };
+  return map[cat]?map[cat]+"\n\nSubject: Re: your enquiry":null;
+}
+
+function esc(s){return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c]));}
+function row(k,v,pill){return '<div class="row"><span class="k">'+k+'</span><span class="'+pill+'">'+esc(v||"—")+"</span></div>";}
+function render(d){
+  const pill=d.needsHuman?"p-hold":(d.action==="quarantine"?"p-quar":"p-route");
+  const act=d.needsHuman?"Hold for human":(d.action==="quarantine"?"Quarantine":"Route + draft");
+  let h=row("Action",act,pill)+row("Category","<b>"+esc(d.category)+"</b>","")
+        +row("Urgency",d.urgency,"")+row("Route to",d.route||"human owner","")
+        +row("SLA",d.sla?d.sla+" min":"immediate","")
+        +row("Confidence",(d.score*100).toFixed(0)+"%","");
+  h+='<p class="note">'+esc(d.reason)+"</p>";
+  if(d.ent&&(d.ent.phone||(d.ent.dates||[]).length)){
+    const bits=[]; if(d.ent.phone)bits.push("phone: "+d.ent.phone);
+    if(d.ent.dates.length)bits.push("dates: "+d.ent.dates.join(", "));
+    h+='<p class="note"><b>Extracted:</b> '+esc(bits.join(" · "))+"</p>";
+  }
+  if(d.draft)h+='<h2 style="margin-top:20px">Drafted reply (not sent)</h2><pre>'+esc(d.draft)+"</pre>";
+  document.getElementById("out").innerHTML=h;
+}
+function run(){
+  render(triage(subj.value,body.value,sender.value));
+}
+SAMPLES.forEach(function(s){
+  const b=document.createElement("button");
+  b.className="chip"; b.textContent=s.label;
+  b.onclick=function(){subj.value=s.subject;body.value=s.body;sender.value=s.sender;run();};
+  document.getElementById("samples").appendChild(b);
+});
+run();
+</script>
+</body>
+</html>

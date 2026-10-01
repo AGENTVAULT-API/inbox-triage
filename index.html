@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Deterministic email triage for shared inboxes. Fails closed on legal, complaint, billing and security mail. Zero dependencies, auditable rules.">
+<title>Inbox Triage — deterministic shared-inbox routing</title>
+<style>
+:root{--bg:#0f1216;--card:#171b21;--line:#252b34;--fg:#e6e9ee;--mut:#98a2b3;--acc:#4f9cf9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:780px;margin:0 auto;padding:48px 24px 80px}
+h1{font-size:30px;line-height:1.25;margin:0 0 14px}
+.lede{color:var(--mut);font-size:17px;margin:0 0 30px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:38px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+a{color:var(--acc)}
+.cta{display:inline-block;background:var(--acc);color:#06101d;text-decoration:none;font-weight:600;padding:13px 26px;border-radius:8px;margin:6px 8px 6px 0}
+.cta.g{background:transparent;color:var(--fg);border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+code{background:#0b0e12;border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:20px;margin:22px 0}
+ul{padding-left:20px}li{margin:7px 0}
+.foot{color:var(--mut);font-size:14px;margin-top:44px;border-top:1px solid var(--line);padding-top:18px}
+</style></head><body><div class="wrap">
+<h1>Inbox Triage</h1>
+<p class="lede">Deterministic, auditable email routing for shared inboxes. Not an LLM wrapper — a transparent rules engine that shows you which word triggered which decision.</p>
+<a class="cta" href="demo-static.html">Live demo</a>
+<a class="cta g" href="https://github.com/AGENTVAULT-API/inbox-triage">Source (MIT)</a>
+
+<h2>The problem</h2>
+<p>A shared <code>info@</code> gets every enquiry and nobody owns any of them. Published
+SME analyses put a 12-person firm's triage at roughly 375 hours a year — about CHF 22,500
+at blended admin rates — before counting the quote request that went to a competitor who
+simply answered sooner.</p>
+
+<h2>It fails closed</h2>
+<div class="card">
+<p>A category-independent gate runs <strong>before</strong> any routing decision. Legal notices,
+complaints, billing disputes and security incidents are detected and held for a human,
+always.</p>
+<p style="color:var(--mut)">This is the most important decision in the codebase, and it exists
+because v1 got it wrong: it classified first and checked sensitivity afterwards, so a legal
+notice phrased in sales language was routed as a sales enquiry and would have been
+auto-actioned. An adversarial regression case covers exactly that input.</p>
+</div>
+<p>It also <strong>abstains</strong>. Below a confidence threshold it returns
+<code>unclassified</code> and hands off to a person rather than guessing — because a
+confident wrong answer is worse than an honest one.</p>
+
+<h2>Measured</h2>
+<table>
+<tr><th>Suite</th><th>Cases</th><th>Routing</th><th>Sensitive held</th></tr>
+<tr><td>bench.py</td><td>16</td><td>100%</td><td>100%</td></tr>
+<tr><td>bench_extended.py</td><td>48</td><td>100%</td><td>100%</td></tr>
+</table>
+<p>~7,700 messages/sec on one core. Zero dependencies.</p>
+<p style="color:var(--mut);font-size:14px"><strong>These are the project's own benchmarks on
+synthetic messages, not customer results.</strong> Pass criteria are defined before each run,
+including the kill criterion.</p>
+
+<h2>What it will never do</h2>
+<ul>
+<li>Send anything — it drafts, a human sends.</li>
+<li>Auto-answer a complaint, legal notice, billing dispute or security incident.</li>
+<li>Call a third-party API or train a model. Local only, content never leaves the machine.</li>
+</ul>
+
+<h2>Try it</h2>
+<p>Pick a sample email, or paste your own. The <code>Sales + legal</code> sample is the
+adversarial case — the safety gate overrides the sales category.</p>
+<a class="cta" href="demo-static.html">Open the demo</a>
+
+<p class="foot">MIT licensed. <a href="https://github.com/AGENTVAULT-API/inbox-triage">github.com/AGENTVAULT-API/inbox-triage</a></p>
+</div></body></html>

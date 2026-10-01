@@ -160,6 +160,11 @@ PHONE_RE = re.compile(
 STOPWORD_TOKENS = {"the", "and", "for", "you", "our", "are", "was", "has", "have",
                    "with", "that", "this", "from", "your", "about", "would", "could"}
 
+# Abstain threshold: below this winning score the engine refuses to guess and
+# holds the message for a human. Module-level (not local to triage()) so the
+# parity checker can assert the static demo uses the same value.
+MIN_CONFIDENCE_SCORE = 3.0
+
 
 @dataclass
 class TriageResult:
@@ -366,7 +371,6 @@ def triage(subject: str, body: str, sender_email: str = "") -> TriageResult:
     # Abstain when the winning category is supported by almost no evidence.
     # A wrong confident routing is worse than an honest "not sure" — the pilot's
     # whole promise is that the routing is trustworthy. Low signal => human.
-    MIN_CONFIDENCE_SCORE = 3.0
     if top_score < MIN_CONFIDENCE_SCORE:
         return TriageResult(
             category="unclassified",
