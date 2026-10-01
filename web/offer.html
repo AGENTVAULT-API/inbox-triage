@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inbox Triage Pilot — 14 days, one inbox category</title>
+<style>
+:root{--bg:#0f1216;--card:#171b21;--line:#252b34;--fg:#e6e9ee;--mut:#98a2b3;--acc:#4f9cf9;--ok:#3fb950}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:30px;line-height:1.25;margin:0 0 14px}
+.lede{color:var(--mut);font-size:17px;margin:0 0 30px}
+h2{font-size:14px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:36px 0 14px;
+  padding-bottom:8px;border-bottom:1px solid var(--line)}
+ul{margin:0;padding-left:20px}li{margin:8px 0}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:15px}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-size:12px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;margin:22px 0}
+.price{font-size:34px;font-weight:700}
+.gate{background:rgba(79,156,249,.08);border-left:3px solid var(--acc);padding:16px 18px;
+  border-radius:0 6px 6px 0;margin:22px 0}
+.gate strong{color:var(--acc)}
+a.cta{display:inline-block;background:var(--acc);color:#06101d;text-decoration:none;font-weight:600;
+  padding:13px 26px;border-radius:8px;margin-top:8px}
+.foot{color:var(--mut);font-size:14px;margin-top:44px;border-top:1px solid var(--line);padding-top:18px}
+code{background:#0b0e12;border:1px solid var(--line);padding:1px 6px;border-radius:4px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Your shared inbox is costing you more than it looks.</h1>
+<p class="lede">A 14-day pilot that classifies, routes and pre-drafts inbound email — with
+everything sensitive left to a human.</p>
+
+<h2>The cost, concretely</h2>
+<p>For a 12-person firm taking ~80 emails a day into <code>info@</code>: about 375 hours a year
+spent triaging, forwarding and chasing. At CHF 60/hr blended, that is roughly
+<strong>CHF 22,500 annually</strong> of coordination — plus the cost nobody itemises:</p>
+<ul>
+  <li><strong>Missed leads.</strong> A quote request that sits 36 hours has usually lost to whoever replied the same afternoon.</li>
+  <li><strong>SLA breaches.</strong> Friday 16:00 "seen but not actioned" until Monday.</li>
+  <li><strong>Duplicate work.</strong> Two people draft replies to the same thread.</li>
+</ul>
+<p>Add GDPR/nFADP exposure from unlogged handling of customer data, and the case stops being soft.</p>
+
+<div class="gate">
+<strong>The offer:</strong> we start narrow on purpose. One inbox category — quote requests,
+or appointment changes — for 14 days. One owner. One visible handover. One metric:
+<em>messages left without an owner at end of day.</em>
+</div>
+
+<h2>What runs</h2>
+<ul>
+  <li>Classifies inbound mail: sales, support, billing, recruitment, press, internal, spam.</li>
+  <li>Extracts company, phone and deadlines so the reply doesn't ask for what you already have.</li>
+  <li>Routes with an SLA — P1 items surface immediately, not at the next inbox check.</li>
+  <li>Pre-drafts an acknowledgement. <strong>Nothing is sent automatically.</strong></li>
+</ul>
+
+<h2>What never gets automated</h2>
+<p>Legal notices, complaints, billing disputes and security incidents are detected and
+<strong>held for a human</strong>, always, before any routing decision is made. That gate runs
+over the whole message, so sensitive mail can't slip through disguised as a sales enquiry.
+This is fail-closed by design: it is better to route a harmless email to a person than to
+auto-reply to a complaint.</p>
+
+<h2>Measured on our own test set</h2>
+<table>
+  <tr><th>Metric</th><th>Result</th></tr>
+  <tr><td>Routing accuracy (11 cases)</td><td class="num">100%</td></tr>
+  <tr><td>Sensitive mail held for a human (5 cases)</td><td class="num">100%</td></tr>
+  <tr><td>Subtype accuracy on sensitive mail</td><td class="num">100%</td></tr>
+  <tr><td>Latency, p95</td><td class="num">0.17 ms</td></tr>
+  <tr><td>Throughput, single core</td><td class="num">~5,000 emails/sec</td></tr>
+</table>
+<p style="color:var(--mut);font-size:14px">These are our own benchmark figures on a
+labelled set of 16 synthetic messages, not a client result. A pilot establishes your real numbers.</p>
+
+<h2>Pricing</h2>
+<table>
+  <tr><th>Option</th><th>Scope</th><th>Price</th></tr>
+  <tr><td>Pilot</td><td>One category, 14 days, one mailbox. Measured before/after.</td>
+      <td class="num">CHF 1,200</td></tr>
+  <tr><td>Rollout</td><td>All categories, tuned routing, team handover, documentation.</td>
+      <td class="num">CHF 3,500</td></tr>
+  <tr><td>Retainer</td><td>Monthly tuning, new categories, monitoring.</td>
+      <td class="num">CHF 400/mo</td></tr>
+</table>
+<p>Pilot fee is credited in full against a rollout. If the pilot shows no measurable
+reduction in unowned messages, you keep the report and owe nothing further.</p>
+
+<h2>Data and hosting</h2>
+<p>Runs in your environment or EU/Swiss infrastructure. Weights nothing on outside servers.
+Retention set to zero where possible, full audit log of every classification, and no model
+training on your mail. Under GDPR and nFADP we default to data residency you specify.</p>
+
+<a class="cta" href="/">Try the live demo</a>
+
+<p class="foot">Inbox Triage — AI-assisted email routing for SMEs.
+Demo figures are internal benchmarks, not client results.</p>
+
+</div>
+</body>
+</html>

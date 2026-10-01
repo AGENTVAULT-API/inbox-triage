@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Inbox Triage — Live Demo</title>
+<style>
+:root{--bg:#0f1216;--card:#171b21;--line:#252b34;--fg:#e6e9ee;--mut:#98a2b3;--acc:#4f9cf9;--ok:#3fb950;--warn:#d29922;--bad:#f85149}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{padding:22px 28px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font-size:19px;margin:0}
+.sub{color:var(--mut);font-size:13px}
+.badge{margin-left:auto;font-size:12px;color:var(--mut);border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+main{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:24px 28px;max-width:1200px}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 14px}
+label{display:block;font-size:12px;color:var(--mut);margin:12px 0 5px}
+input,textarea{width:100%;background:#0b0e12;border:1px solid var(--line);color:var(--fg);
+  border-radius:6px;padding:9px 11px;font:inherit;font-size:14px}
+textarea{min-height:118px;resize:vertical}
+.samples{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px}
+button{background:var(--acc);color:#06101d;border:0;border-radius:6px;padding:10px 18px;
+  font:inherit;font-weight:600;cursor:pointer;margin-top:16px}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line);padding:6px 11px;
+  font-size:12px;font-weight:400;margin:0}
+.chip{border:1px solid var(--line);color:var(--mut);border-radius:99px;padding:5px 12px;font-size:12px;cursor:pointer}
+.chip:hover{color:var(--fg);border-color:var(--acc)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.k{color:var(--mut);font-size:13px}
+.pill{font-size:11px;padding:3px 9px;border-radius:99px;font-weight:600;letter-spacing:.03em}
+.p-hold{background:rgba(248,81,73,.15);color:var(--bad)}
+.p-route{background:rgba(63,185,80,.15);color:var(--ok)}
+.p-quar{background:rgba(210,153,34,.15);color:var(--warn)}
+pre{background:#0b0e12;border:1px solid var(--line);border-radius:6px;padding:13px;font-size:12.5px;
+  white-space:pre-wrap;word-break:break-word;color:var(--fg);margin:12px 0 0}
+.note{color:var(--mut);font-size:12px;margin-top:14px;line-height:1.5}
+.err{color:var(--bad);font-size:13px;margin-top:10px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Inbox Triage</h1>
+  <span class="sub">shared-inbox routing demo</span>
+  <span class="badge" id="bench">loading benchmark…</span>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Incoming email</h2>
+    <div class="samples" id="samples"></div>
+    <label for="subj">Subject</label>
+    <input id="subj" placeholder="Subject line">
+    <label for="body">Body</label>
+    <textarea id="body" placeholder="Paste the email body"></textarea>
+    <label for="sender">Sender address</label>
+    <input id="sender" placeholder="name@company.com">
+    <button onclick="run()">Triage this email</button>
+    <div class="err" id="err"></div>
+    <p class="note">
+      This demo runs the same engine a pilot would run. It <strong>recommends</strong> —
+      nothing is ever sent or actioned automatically. Legal, complaint, billing-dispute
+      and security-incident mail is always held for a human.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>Routing decision</h2>
+    <div id="out"><p class="note">Select a sample or paste an email, then triage.</p></div>
+  </div>
+</main>
+
+<script>
+async function loadSamples(){
+  try{
+    const r = await fetch('/api/samples'); const s = await r.json();
+    const el = document.getElementById('samples');
+    s.forEach(x=>{
+      const b=document.createElement('button');
+      b.className='chip'; b.textContent=x.label;
+      b.onclick=()=>{subj.value=x.subject;body.value=x.body;sender.value=x.sender;run();};
+      el.appendChild(b);
+    });
+  }catch(e){}
+}
+async function run(){
+  const payload={subject:subj.value,body:body.value,sender:sender.value};
+  const err=document.getElementById('err'); err.textContent='';
+  try{
+    const r=await fetch('/api/triage',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)});
+    const d=await r.json();
+    render(d);
+  }catch(e){ err.textContent='Demo server unreachable. Run: python3 server.py'; }
+}
+function row(k,v,pill){
+  return `<div class="row"><span class="k">${k}</span><span class="${pill||''}">${v||'—'}</span></div>`;
+}
+function render(d){
+  const pill = d.needs_human ? 'p-hold' : (d.action==='quarantine' ? 'p-quar' : 'p-route');
+  const act = d.needs_human ? 'Hold for human'
+              : d.action==='quarantine' ? 'Quarantine' : 'Route + draft';
+  let h = row('Action',act,pill) + row('Category','<b>'+d.category+'</b>','')
+        + row('Urgency',d.urgency,'') + row('Route to',d.route_to||'human owner','')
+        + row('SLA', d.sla_minutes? d.sla_minutes+' min':'immediate','')
+        + row('Confidence', (d.score*100).toFixed(0)+'%','');
+  h += `<p class="note">${d.reason||''}</p>`;
+  if(d.entities){
+    const e=d.entities;
+    if(e.company||e.phone||e.dates_mentioned?.length){
+      h+='<p class="note"><b>Extracted:</b> '+
+         [e.company&&'company: '+e.company, e.phone&&'phone: '+e.phone,
+          e.dates_mentioned?.length&&'dates: '+e.dates_mentioned.join(', ')]
+          .filter(Boolean).join(' · ')+'</p>';
+    }
+  }
+  if(d.reply){ h+='<h2 style="margin-top:22px">Drafted reply (not sent)</h2><pre>'+
+              d.reply.replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))+'</pre>'; }
+  document.getElementById('out').innerHTML=h;
+}
+async function loadBench(){
+  try{
+    const r=await fetch('/state/bench.json'); const b=await r.json();
+    if(b.passed) document.getElementById('bench').textContent =
+      `verified: ${(b.routing_accuracy*100).toFixed(0)}% routing · 100% sensitive held · p95 ${b.p95_ms} ms`;
+  }catch(e){}
+}
+loadSamples(); loadBench();
+</script>
+</body>
+</html>
