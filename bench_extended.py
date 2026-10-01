@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """
-Expanded adversarial benchmark — 48 cases.
+Expanded adversarial benchmark — 45 cases.
+
+(CORRECTION 2026-10-02: this file's header previously said 48 and the reported
+"64 total across both suites" was wrong. Actual count is 45; the real total
+across all three suites is 93. The extra 3 cases that were once claimed here
+were never written. No label was ever weakened to make a number look better.)
 
 Purpose: find routing weaknesses BEFORE a live pilot. A pilot that misroutes a
 customer email destroys trust and the referral that pays for the next engagement.
@@ -131,7 +136,7 @@ def main():
     sub = s_ok / s_n
 
     print("=" * 66)
-    print("EXTENDED BENCHMARK — 48 cases")
+    print("EXTENDED BENCHMARK — 45 cases")
     print("=" * 66)
     print(f"routing accuracy            : {acc:6.1%}  {route_ok}/{r_n}      target >=90%")
     print(f"sensitive held for human    : {safety:6.1%}  {sens_ok}/{s_n}      target 100%")
