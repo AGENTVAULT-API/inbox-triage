@@ -51,25 +51,44 @@ HUMAN_ONLY = {"billing_dispute", "legal", "complaint", "security_incident"}
 # ranking. If it only ran on the winning category, a legal notice phrased with
 # sales language would be auto-actioned. Fail-closed is the only safe default.
 SENSITIVE_SIGNALS = {
+    # NOTE: the German/Swiss/Austrian terms are NOT decoration. The first
+    # sector benchmark (bench_sector.py) failed 5 of 6 sensitive cases purely
+    # because none of these words existed here — an "Anwaltsschreiben" and a
+    # "Datenleck" both fell through the safety gate and were ranked as ordinary
+    # mail. A safety gate that only works in English is not a safety gate.
     "legal": [
         "solicitor", "lawyer", "attorney", "legal notice", "legal action",
         "court", "litigation", "liability", "cease and desist", "statutory",
         "liability clause", "jurisdiction", "arbitration", "legal claim",
+        # DE/CH/AT
+        "anwalt", "anwältin", "anwaltsschreiben", "rechtsanwalt", "gerichtlich",
+        "mahnklage", "inkasso", "rechtliche falle", "vertragliche falle",
+        "klage", "einklagieren",
     ],
     "security_incident": [
         "data breach", "breach of data", "gdpr breach", "security incident",
         "phishing", "ransomware", "compromised", "unauthorised access",
         "unauthorized access", "leaked data", "data leak", "suspected breach",
         "ncsc", "incident response", "credential",
+        # DE/CH/AT
+        "datenleck", "datenverlust", "abgegriffen", "phishing-mail", "verdacht auf betrug",
+        "kompromittiert", "sicherheitsvorfall",
     ],
     "complaint": [
         "formal complaint", "unhappy", "disappointed", "dispute", "refund",
         "chargeback", "escalate to management", "your fault", "poor service",
+        # DE/CH/AT
+        "reklamation", "rückerstattung", "rueckerstattung", "eskalieren",
+        "eschalieren", "schlechte arbeit", "unzufrieden", "mängel", "maengel",
+        "geschäftsleitung", "geschaeftsleitung",
     ],
     "billing_dispute": [
         "billing dispute", "overcharge", "overcharged", "wrong amount",
         "do not recognise", "do not recognize", "unauthorised charge",
         "unauthorized charge", "credit note",
+        # DE/CH/AT
+        "zu viel berechnet", "falsche rechnung", "rechnung ist falsch",
+        "gutschrift", "betrag nicht an", "falsch berechnet", "zu hoch berechnet",
     ],
 }
 
@@ -83,11 +102,17 @@ CATEGORY_SIGNALS = {
         "strong": ["offer", "proposal", "quote", "quotation", "pricing", "estimate",
                    "demo", "trial", "interested in", "onboarding", "contract",
                    "rfq", "request for quote", "how much", "budget", "scope of work",
-                   "quotation for", "best pricing", "rates for the coming year"],
+                   "quotation for", "best pricing", "rates for the coming year",
+                   # DE/CH/AT — Angebot/Offerte is how a trades firm gets a job.
+                   "angebot", "offerte", "kostenvoranschlag", "preisfrage",
+                   "angebotsanfrage", "preisliste", "konditionen", "referenzen",
+                   "kostenrahmen", "leistungsverzeichnis"],
         "weak": ["enquiry", "inquiry", "follow up", "following up", "question about",
                  "your services", "do you offer", "get in touch", "any update",
                  "would be good to hear", "referred you", "details of your",
-                 "like to hear from you", "enterprise plan"],
+                 "like to hear from you", "enterprise plan",
+                 "anfrage", "wäre froh", "gerne ein angebot", "vorbeikommen",
+                 "kosten", "preis"],
     },
     "support": {
         "strong": ["not working", "broken", "error", "cannot", "can't", "outage",
@@ -96,10 +121,22 @@ CATEGORY_SIGNALS = {
                    "password reset", "token is expired", "delayed", "tracking has not",
                    "will it arrive", "not updated", "stopped working", "feature request",
                    "add a feature", "manual work", "blocked client work",
-                   "export to", "each week", "slot"],
+                   "export to", "each week", "slot",
+                   # DE/CH/AT — Störungsmeldung is the single most common
+                   # email a Maler/SHK/Elektro mailbox receives.
+                   "störung", "stoerung", "defekt", "kaputt", "ausgefallen",
+                   "bleibt kalt", "kein warmwasser", "kein strom", "tropft",
+                   "undicht", "verstopft", "termin verschieben", "termin verschoben",
+                   "terminabsage", "keine funktion", "funktioniert nicht",
+                   "lässt sich nicht", "laesst sich nicht", "sicherung ausgelöst",
+                   "wasserschaden", "heizung bleibt", "keine heizung",
+                   "termin vorschlagen", "neuen termin", "neuer termin",
+                   "schlüsselübergabe", "schluesseluebergabe", "abgesagt"],
         "weak": ["help", "support", "question", "how do i", "assistance", "complaint",
                  "unhappy", "refund", "please advise", "advice urgently",
-                 "save us", "that would", "stuck"],
+                 "save us", "that would", "stuck",
+                 "hilfe", "bitte um hilfe", "dringend", "kann jemand",
+                 "wann kommt", "gemeldet", "reparatur", "termin", "passenden termin"],
     },
     "billing": {
         "strong": ["invoice", "payment", "overdue", "reminder", "receipt", "vat",
@@ -107,34 +144,73 @@ CATEGORY_SIGNALS = {
                    "payment terms", "monthly invoicing", "copy of a receipt",
                    "payment has been made", "renews automatically", "accounting department",
                    "present a budget internally", "second reminder", "first reminder",
-                   "our current contract renews"],
+                   "our current contract renews",
+                   # DE/CH/AT
+                   "rechnung", "mahnung", "zahlung", "zahlungsziel", "überfällig",
+                   "ueberfaellig", "quittung", "beleg", "zahlbar", "überwiesen",
+                   "ueberwiesen", "eingang bestätigen", "eingang bestaetigen",
+                   "kreditor", "debitor", "mwst", "zahlungseingang"],
         "weak": ["pay", "cost", "price", "amount due", "for our accounts", "for your records",
-                 "contract renews", "renew", "renewal"],
+                 "contract renews", "renew", "renewal",
+                 "abrechnung", "buchen", "gebucht", "betrag"],
     },
     "recruitment": {
         "strong": ["cv", "resume", "curriculum vitae", "application", "job",
                    "vacancy", "position", "portfolio", "references", "interview",
-                   "i applied", "advertised"],
-        "weak": ["career", "recruit", "hiring", "candidate", "heard nothing"],
+                   "i applied", "advertised",
+                   # DE/CH/AT — a Malerbetrieb inbox is full of Lehrling CVs.
+                   "bewerbung", "bewerbungen", "lebenslauf", "cv beigefügt",
+                   "cv beigefuegt", "lehrstelle", "ausgeschrieben", "stellenangebot",
+                   "praktikum", "praktikumsstelle", "schnupperlehre", "ausbildung",
+                   "bewerbungsgespräch", "bewerbungsgespraech", "eintritt",
+                   "matura", "referenzen", "kenntnisse", "beworben",
+                   "mich vor", "vorgestellt", "vorstellungsgespräch"],
+        "weak": ["career", "recruit", "hiring", "candidate", "heard nothing",
+                 "stelle", "arbeitsstelle", "noch offen", "gesucht",
+                 "nichts gehört", "nichts gehoert", "seit wochen"],
     },
     "press": {
         "strong": ["press", "journalist", "interview request", "media", "reporter",
                    "editorial", "publication", "podcast", "magazine", "guest",
-                   "writing a feature", "as a guest"],
-        "weak": ["article", "feature", "coverage", "episode"],
+                   "writing a feature", "as a guest",
+                   # DE/CH/AT
+                   "redaktion", "zeitung", "zeitungsartikel", "regionalblatt",
+                   "fachmagazin", "magazin", "beitrag für", "beitrag fuer",
+                   "interviewanfrage", "medienanfrage", "pressemitteilung",
+                   "artikel", "ausgabe"],
+        "weak": ["article", "feature", "coverage", "episode",
+                 "redaktionelle", "publikation", "journalistin"],
     },
     "internal": {
         "strong": ["fyi", "internal", "team", "all hands", "minutes", "rota",
-                   "shift swap", "colleagues", "my shifts", "internal only"],
-        "weak": ["shift", "office", "covering", "attached the minutes"],
+                   "shift swap", "colleagues", "my shifts", "internal only",
+                   # DE/CH/AT
+                   "schichtplan", "schichttausch", "spätschicht", "spaetschicht",
+                   "dienstplan", "montagseinsatz", "teammeeting", "an alle",
+                   "zur info", "bitte beachten", "nur intern", "abholen", "lager"],
+        "weak": ["shift", "office", "covering", "attached the minutes",
+                 "planung", "einsatz", "personal", "übergabe", "uebergabe"],
     },
     "spam": {
         "strong": ["unsubscribe", "limited time offer", "act now", "click here",
                    "guaranteed", "viagra", "crypto giveaway", "lottery", "winner",
                    "congratulations you", "work from home and earn", "web3 airdrop",
-                   "you have won", "claim your prize", "hot singles", "attractive singles"],
+                   "you have won", "claim your prize", "hot singles", "attractive singles",
+                   # DE/CH/AT
+                   "gewinnspiel", "gewonnen", "gewinn", "preis abgeholt",
+                   "gratis geld", "klicklos", "abmeldelink", "double your",
+                   "krypto giveaway", "sonderaktion", "nur für dich", "nur fuer dich",
+                   "ranking verbessern", "besucher erhöhen", "backlinks kaufen",
+                   # A mail that SELLS you SEO while using the word "Angebot" must
+                   # not score as a customer asking for a quote. "Angebot sichern"
+                   # is the giveaway: nobody requests an offer by demanding to
+                   # "secure" one.
+                   "günstige seo", "günstige seo dienstleistungen", "guenstige seo",
+                   "angebot sichern", "bezahlt", "klickstarke", "sichtbarkeit"],
         "weak": ["buy followers", "seo services", "guest post", "backlinks",
-                 "cheap backlinks", "guaranteed returns", "click here to start"],
+                 "cheap backlinks", "guaranteed returns", "click here to start",
+                 "seo dienstleistungen", "gastbeitrag", "klicks steigern",
+                 "backlinks", "followers", "präsentiert ihr", "presentiert euer"],
     },
 }
 
@@ -142,11 +218,18 @@ URGENCY_P1_SIGNALS = [
     "urgent", "asap", "immediately", "emergency", "today", "by end of day",
     "eod", "escalation", "legal notice", "data breach", "outage", "critical",
     "deadline", "time sensitive", "no reply", "second attempt", "third attempt",
+    # DE/CH/AT
+    "dringend", "dringliche", "sofort", "notfall", "heute noch", "eilig",
+    "es brennt", "ausgelöst", "ausgeloest", "kein strom", "kein warmwasser",
+    "zweite mahnung", "schnellstmöglich", "schnellstmoeglich",
 ]
 
 URGENCY_P2_SIGNALS = [
     "this week", "soon", "shortly", "short notice", "priority", "follow up",
     "reminder", "waiting", "chase", "quick question",
+    # DE/CH/AT
+    "diese woche", "nächste woche", "naechste woche", "terminvorschlag",
+    "kurzfristig", "bitte melden", "rückfrage", "rueckfrage", "erinnere",
 ]
 
 # Deadline extraction patterns.
