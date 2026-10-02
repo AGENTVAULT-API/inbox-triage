@@ -51,9 +51,10 @@ confident wrong answer is worse than an honest one.</p>
 <table>
 <tr><th>Suite</th><th>Cases</th><th>Routing</th><th>Sensitive held</th></tr>
 <tr><td>bench.py</td><td>16</td><td>100%</td><td>100%</td></tr>
-<tr><td>bench_extended.py</td><td>48</td><td>100%</td><td>100%</td></tr>
+<tr><td>bench_extended.py</td><td>45</td><td>100%</td><td>100%</td></tr>
+<tr><td>bench_sector.py <span style="color:var(--mut)">(DE/CH/AT trades &amp; SHK)</span></td><td>32</td><td>100%</td><td>100%</td></tr>
 </table>
-<p>~7,700 messages/sec on one core. Zero dependencies.</p>
+<p>93 cases. ~4,000 messages/sec on one core. Zero dependencies.</p>
 <p style="color:var(--mut);font-size:14px"><strong>These are the project's own benchmarks on
 synthetic messages, not customer results.</strong> Pass criteria are defined before each run,
 including the kill criterion.</p>
@@ -69,6 +70,11 @@ including the kill criterion.</p>
 <p>Pick a sample email, or paste your own. The <code>Sales + legal</code> sample is the
 adversarial case — the safety gate overrides the sales category.</p>
 <a class="cta" href="demo-static.html">Open the demo</a>
+<a class="cta" style="background:var(--card);color:var(--fg);border:1px solid var(--line)"
+   href="mailto:nicoferretti2000@gmail.com?subject=Inbox%20Triage%20pilot">Ask about the pilot</a>
 
-<p class="foot">MIT licensed. <a href="https://github.com/AGENTVAULT-API/inbox-triage">github.com/AGENTVAULT-API/inbox-triage</a></p>
+<p class="foot">MIT licensed. <a href="https://github.com/AGENTVAULT-API/inbox-triage">github.com/AGENTVAULT-API/inbox-triage</a><br>
+Offer, pricing and a 14-day pilot: <a href="https://lars.vps.webdock.cloud/inbox-triage/">lars.vps.webdock.cloud/inbox-triage</a><br>
+New service, no client references yet — the engine is tested, the service is not yet proven on
+anyone's real mail.</p>
 </div></body></html>
