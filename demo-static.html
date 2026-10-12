@@ -14,6 +14,10 @@ h1{font-size:18px;margin:0}
 main{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:22px 26px;max-width:1180px}
 @media(max-width:840px){main{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+footer{max-width:1180px;padding:0 26px 34px;margin-top:6px}
+.cta{display:inline-block;background:var(--acc);color:#06101d;text-decoration:none;font-weight:600;
+     padding:12px 24px;border-radius:8px;margin:0 8px 10px 0}
+.cta.g{background:transparent;color:var(--fg);border:1px solid var(--line);font-weight:400}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--mut);margin:0 0 13px}
 label{display:block;font-size:12px;color:var(--mut);margin:11px 0 5px}
 input,textarea{width:100%;background:#0b0e12;border:1px solid var(--line);color:var(--fg);
@@ -38,6 +42,16 @@ pre{background:#0b0e12;border:1px solid var(--line);border-radius:6px;padding:13
 .note{color:var(--mut);font-size:12px;margin-top:13px;line-height:1.5}
 .badge{margin-left:auto;font-size:11.5px;color:var(--mut);border:1px solid var(--line);
   padding:4px 10px;border-radius:99px}
+/* Sprachumschalter. 26 von 39 versendeten Erstmails waren deutsch, und die
+   Seite, auf die ALLE zeigen, war bisher ausschliesslich englisch — dieselbe
+   Fehlerklasse wie Batch 01, nur eine Stufe weiter unten: nicht die Mail war
+   in der falschen Sprache, sondern die Seite, auf die sie verweist. */
+.langbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:0 0 16px;
+  font-size:13px;color:var(--mut)}
+.langwrap{max-width:1180px;padding:16px 26px 0}
+.langbar a{color:var(--fg);text-decoration:none;border:1px solid var(--line);
+  border-radius:99px;padding:4px 12px}
+.langbar a[aria-current="page"]{background:var(--acc);color:#06101d;font-weight:600}
 </style>
 </head>
 <body>
@@ -46,6 +60,16 @@ pre{background:#0b0e12;border:1px solid var(--line);border-radius:6px;padding:13
   <span class="sub">shared-inbox routing — live demo</span>
   <span class="badge">static build · same engine as the pilot</span>
 </header>
+
+<div class="langwrap">
+  <nav class="langbar">
+    <span>Sprache / Language / Langue / Lingua:</span>
+    <a href="https://lars.vps.webdock.cloud/inbox-triage/" hreflang="en" lang="en" aria-current="page">Offer: English</a>
+    <a href="https://lars.vps.webdock.cloud/inbox-triage/index-de.html" hreflang="de" lang="de">Offer: Deutsch</a>
+    <a href="https://lars.vps.webdock.cloud/inbox-triage/index-fr.html" hreflang="fr" lang="fr">Offre: Français</a>
+    <a href="https://lars.vps.webdock.cloud/inbox-triage/index-it.html" hreflang="it" lang="it">Offerta: Italiano</a>
+  </nav>
+</div>
 
 <main>
   <div class="card">
@@ -68,6 +92,14 @@ pre{background:#0b0e12;border:1px solid var(--line);border-radius:6px;padding:13
       decision is made.</p>
   </div>
 </main>
+
+<footer>
+  <p class="note" style="margin-top:0">This is the routing engine on synthetic messages, not
+    on your mail. The pilot measures your real inbox, before and after.</p>
+  <a class="cta" href="https://lars.vps.webdock.cloud/inbox-triage/">See the offer and pricing</a>
+  <a class="cta g" href="https://lars.vps.webdock.cloud/inbox-triage/#pricing">Pricing: CHF 1,200 pilot, CHF 3,500 rollout</a>
+  <a class="cta g" href="mailto:nicoferretti2000@gmail.com?subject=Inbox%20Triage%20pilot">Ask about the pilot</a>
+</footer>
 
 <script>
 /* Same signal tables as triage.py. Rules engine, no network call — which is
