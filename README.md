@@ -110,3 +110,16 @@ the pilot should narrow to one category rather than ship.
 ## Licence
 
 MIT.
+## Managed pilot
+
+The engine above is MIT and free to run yourself. If you would rather not,
+there is a 14-day pilot on one inbox category: it classifies, routes and
+pre-drafts inbound mail, measured before and after.
+
+- [Live demo](https://agentvault-api.github.io/inbox-triage/demo-static.html) — runs in the browser, no signup
+- [Offer and pricing](https://lars.vps.webdock.cloud/inbox-triage/) — CHF 1,200 for the 14-day pilot, credited in
+  full against a rollout
+- [Ask about the pilot](mailto:nicoferretti2000@gmail.com?subject=Inbox%20Triage%20pilot) — email Lars
+
+There are no clients and no results to show yet. The benchmarks above are
+this project's own synthetic messages, not customer outcomes.
